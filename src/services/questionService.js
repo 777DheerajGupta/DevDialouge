@@ -24,8 +24,8 @@ export const getQuestionById = async (questionId) => {
 // Ask a new question
 export const askQuestion = async (questionData) => {
   try {
-    const response = await apiConnector('POST', '/questions', questionData , {
       const token = localStorage.getItem('token');
+    const response = await apiConnector('POST', '/questions', questionData , {
       headers: {
         'Authorization': `Bearer ${token}`, // If using token auth
         // Don't set Content-Type, let browser set it with boundary for FormData
