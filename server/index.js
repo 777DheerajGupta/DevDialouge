@@ -255,7 +255,7 @@ app.use('/api/v1/gemini', geminiRoutes);
 app.use('/api/v1/trending', trendingRoutes);
 
 // Server Listening
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
