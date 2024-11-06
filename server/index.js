@@ -260,7 +260,8 @@ server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-app.get('/', (req, res) => {
-  res.send('Welcome to DevDialouge Backend');
-});
+// app.get('/', (req, res) => {
+
+//   res.send('Welcome to DevDialouge Backend');
+// });
 
