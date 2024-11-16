@@ -46,7 +46,7 @@ const server = http.createServer(app);
 
 // Configure CORS for Express
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: 'https://dev-dialouge-frontend.vercel.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -256,7 +256,7 @@ app.use('/api/v1/gemini', geminiRoutes);
 app.use('/api/v1/trending', trendingRoutes);
 
 // Server Listening
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
