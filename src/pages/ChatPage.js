@@ -68,86 +68,120 @@ const ChatPage = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    console.log("selectedUser", selectedUser);
     if (!selectedUser) return;
+    // console.log('selected user' , selectedUser)
 
-    // Mark messages as read when chat is opened
-    markMessagesAsRead(selectedUser._id);
+    // Log the socket URL for debugging
+    const socketUrl = `${process.env.REACT_APP_BASE_URL}/chat`;
+    console.log("Socket URL:", socketUrl);
 
-    // Initialize socket connection
-    socketRef.current = io(process.env.REACT_APP_BASE_URL, {
-      withCredentials: true,
-      transports: ['websocket', 'polling']
+    // Initialize socket connection to the /chat namespace
+    socketRef.current = io(socketUrl, {
+        withCredentials: true,
+        transports: ['websocket', 'polling'],
+        auth: {
+            token: localStorage.getItem('token') // Ensure the token is included
+        }
+    });
+
+    socketRef.current.on('connection', () => {
+        console.log("Socket connected:", socketRef.current.id); // Log socket ID
+    });
+
+    socketRef.current.on('connect_error', (err) => {
+        console.error("Socket connection error:", err); // Log connection error
     });
 
     // Join private room
-    socketRef.current.emit('join', {
-      userId: currentUser._id,
-      recipientId: selectedUser._id
+    socketRef.current.emit('join-chat', {
+        userId: currentUser._id,
+        recipientId: selectedUser._id
+    });
+
+    // Listen for incoming messages
+    socketRef.current.on('private-message', (message) => {
+        // Ensure the incoming message includes the sender's name
+        const messageWithSender = {
+            ...message,
+            sender: message.senderName || currentUser.name, // Fallback to currentUser.name if not available
+            status: 'received',
+        };
+
+        setMessages(prevMessages => [...prevMessages, messageWithSender]);
+        scrollToBottom(); // Scroll to the bottom when a new message is received
     });
 
     // Fetch chat history
     const fetchChatHistory = async () => {
-      try {
-        const response = await apiConnector('GET', `/chat/history/${selectedUser._id}`);
-        if (response.data) {
-          const formattedMessages = response.data.data.messages.map(msg => ({
-            ...msg,
-            status: msg.sender === currentUser._id ? 'sent' : 'received',
-            read: Boolean(msg.read)
-          }));
-          setMessages(formattedMessages);
-          scrollToBottom();
+        try {
+            const response = await apiConnector('GET', `/chat/history/${selectedUser._id}`);
+            if (response.data) {
+                const formattedMessages = response.data.data.messages.map(msg => ({
+                    ...msg,
+                    status: msg.sender === currentUser.id ? 'sent' : 'received',
+                }));
+                setMessages(formattedMessages);
+                scrollToBottom();
+            }
+        } catch (error) {
+            console.error('Error fetching chat history:', error);
         }
-        setConnected(true);
-      } catch (error) {
-        console.error('Error fetching chat history:', error);
-      }
     };
 
     fetchChatHistory();
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+        if (socketRef.current) {
+            socketRef.current.off('private-message'); // Clean up listener
+            socketRef.current.disconnect();
+        }
     };
-  }, [selectedUser, currentUser._id]);
+  }, [selectedUser, currentUser.id]);
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
     if (!selectedUser || newMessage.trim() === '') return;
 
     const messageData = {
-      content: newMessage.trim(),
-      recipient: selectedUser._id,
+        content: newMessage.trim(),
+        recipient: selectedUser._id,
+        sender: {
+            id: currentUser.id,
+            name: currentUser.name,
+        },
     };
 
     try {
-      // Send to backend first
-      const response = await apiConnector('POST', '/chat/private', messageData);
-      
-      if (response.data.success) {
-        // Add message to local state
-        const fullMessage = {
-          ...response.data.data,
-          sender: currentUser._id,
-          timestamp: new Date().toISOString(),
-        };
-        
-        setMessages(prevMessages => [...prevMessages, fullMessage]);
-        
-        // Send through socket
-        socketRef.current.emit('private-message', fullMessage);
-        
-        // Clear input
-        setNewMessage('');
-      }
+        // Send to backend first
+        const response = await apiConnector('POST', '/chat/private', messageData);
+
+        if (response.data.success) {
+            // Add message to local state
+            const fullMessage = {
+                ...response.data.data,
+                sender: {
+                    id: currentUser.id,
+                    name: currentUser.name,
+                },
+                timestamp: new Date().toISOString(),
+            };
+
+            // Update local state immediately
+            setMessages(prevMessages => [...prevMessages, fullMessage]);
+            console.log("Message sent:", fullMessage);
+
+            // Send through socket
+            socketRef.current.emit('private-message', fullMessage);
+
+            // Clear input
+            setNewMessage('');
+        }
     } catch (error) {
-      console.error('Error sending message:', error);
-      // You might want to show an error notification to the user
+        console.error('Error sending message:', error);
     }
   };
+
+
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -306,7 +340,7 @@ const ChatPage = () => {
                                 <ChatMessage
                                     key={index}
                                     message={msg}
-                                    isOwnMessage={msg.sender === currentUser._id}
+                                    isOwnMessage={msg.sender === currentUser.id}
                                 />
                             ))}
                             <div ref={messagesEndRef} />
@@ -340,7 +374,7 @@ const ChatPage = () => {
             )}
         </div>
     </div>
-  );
+  );    
 };
 
 export default ChatPage;

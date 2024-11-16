@@ -28,7 +28,7 @@ exports.login = async (req, res) => {
       if (!user) {
         return res.status(401).json({ 
           success: false, 
-          message: 'Invalid credentials' 
+          message: 'user not found' 
         });
       }
   
@@ -40,7 +40,7 @@ exports.login = async (req, res) => {
       if (!isPasswordValid) {
         return res.status(401).json({ 
           success: false, 
-          message: 'Invalid credentials' 
+          message: 'password is incorrect' 
         });
       }
   

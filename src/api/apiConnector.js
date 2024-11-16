@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000/api/v1';
+const BASE_URL = process.env.REACT_APP_BASE_URL || 'https://devdialouge-back.onrender.com/api/v1';
 
 export const apiConnector = async (method, endpoint, data = null, isFormData = false) => {
   try {
@@ -27,7 +27,7 @@ export const apiConnector = async (method, endpoint, data = null, isFormData = f
 
     // Make the API call
     const response = await axios(config);
-    console.log('API Response:', response);
+    // console.log('API Response:', response);
     return response; // Return only response data
   } catch (error) {
     console.error('API Error:', {

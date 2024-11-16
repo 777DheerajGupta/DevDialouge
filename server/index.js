@@ -39,7 +39,7 @@ const trendingRoutes = require('./routes/trendingRoutes');
 const app = express();
 const server = http.createServer(app);
 
-// app.use(express.json());
+ app.use(express.json());
 
 
 
@@ -67,6 +67,7 @@ const io = socketIO(server, {
 });
 
 const chatIO = initializeChatSocket(io);
+// console.log('chat io', chatIO)
 const groupIO = initializeGroupSocket(io);
 
 // Make both socket instances available in routes
@@ -79,17 +80,17 @@ app.use((req, res, next) => {
 });
 
 // Socket.IO middleware for authentication
-io.use((socket, next) => {
-    if (socket.handshake.auth && socket.handshake.auth.token) {
-        jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET, (err, decoded) => {
-            if (err) return next(new Error('Authentication error'));
-            socket.user = decoded;
-            next();
-        });
-    } else {
-        next(new Error('Authentication error'));
-    }
-});
+// io.use((socket, next) => {
+//     if (socket.handshake.auth && socket.handshake.auth.token) {
+//         jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET, (err, decoded) => {
+//             if (err) return next(new Error('Authentication error'));
+//             socket.user = decoded;
+//             next();
+//         });
+//     } else {
+//         next(new Error('Authentication error'));
+//     }
+// });
 
 // Middleware to handle null body
 app.use((req, res, next) => {
@@ -160,83 +161,83 @@ mongoose.connect(process.env.MONGODB_URL, {
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Socket.IO connection handling
-io.on('connection', (socket) => {
-    console.log('New client connected:', socket.user?.id);
+// io.on('connection', (socket) => {
+//     console.log('New client connected:', socket.user?.id);
 
-    // Join private chat room
-    socket.on('join-private', (data) => {
-        const { userId, recipientId } = data;
-        const room = [userId, recipientId].sort().join('-');
-        socket.join(room);
-        console.log(`User joined private room: ${room}`);
-    });
+//     // Join private chat room
+//     socket.on('join-private', (data) => {
+//         const { userId, recipientId } = data;
+//         const room = [userId, recipientId].sort().join('-');
+//         socket.join(room);
+//         console.log(`User joined private room: ${room}`);
+//     });
 
-    // Join group chat rooms
-    socket.on('join-groups', (groups) => {
-        groups.forEach(groupId => {
-            socket.join(`group-${groupId}`);
-            console.log(`User joined group: ${groupId}`);
-        });
-    });
+//     // Join group chat rooms
+//     socket.on('join-groups', (groups) => {
+//         groups.forEach(groupId => {
+//             socket.join(`group-${groupId}`);
+//             console.log(`User joined group: ${groupId}`);
+//         });
+//     });
 
-    // Handle private messages
-    socket.on('private-message', (message) => {
-        const room = [message.sender, message.recipient].sort().join('-');
-        io.to(room).emit('private-message', message);
-        console.log(`Private message sent in room: ${room}`);
-    });
+//     // Handle private messages
+//     socket.on('private-message', (message) => {
+//         const room = [message.sender, message.recipient].sort().join('-');
+//         io.to(room).emit('private-message', message);
+//         console.log(`Private message sent in room: ${room}`);
+//     });
 
-    // Handle group messages
-    socket.on('group-message', (data) => {
-        const { groupId, message } = data;
-        io.to(`group-${groupId}`).emit('new-group-message', {
-            groupId,
-            message: {
-                ...message,
-                sender: {
-                    _id: socket.user.id,
-                    name: socket.user.name,
-                    profilePicture: socket.user.profilePicture
-                }
-            }
-        });
-        console.log(`Group message sent in group: ${groupId}`);
-    });
+//     // Handle group messages
+//     socket.on('group-message', (data) => {
+//         const { groupId, message } = data;
+//         io.to(`group-${groupId}`).emit('new-group-message', {
+//             groupId,
+//             message: {
+//                 ...message,
+//                 sender: {
+//                     _id: socket.user.id,
+//                     name: socket.user.name,
+//                     profilePicture: socket.user.profilePicture
+//                 }
+//             }
+//         });
+//         console.log(`Group message sent in group: ${groupId}`);
+//     });
 
-    // Handle typing status
-    socket.on('typing', (data) => {
-        const { groupId, userName } = data;
-        socket.to(`group-${groupId}`).emit('user-typing', {
-            groupId,
-            userName
-        });
-    });
+//     // Handle typing status
+//     socket.on('typing', (data) => {
+//         const { groupId, userName } = data;
+//         socket.to(`group-${groupId}`).emit('user-typing', {
+//             groupId,
+//             userName
+//         });
+//     });
 
-    // Handle read receipts
-    socket.on('message-read', (data) => {
-        const { groupId, messageId } = data;
-        socket.to(`group-${groupId}`).emit('read-receipt', {
-            groupId,
-            messageId,
-            userId: socket.user.id
-        });
-    });
+//     // Handle read receipts
+//     socket.on('message-read', (data) => {
+//         const { groupId, messageId } = data;
+//         socket.to(`group-${groupId}`).emit('read-receipt', {
+//             groupId,
+//             messageId,
+//             userId: socket.user.id
+//         });
+//     });
 
-    // Handle group updates
-    socket.on('group-update', (data) => {
-        const { groupId, updateType, payload } = data;
-        io.to(`group-${groupId}`).emit('group-updated', {
-            groupId,
-            updateType,
-            payload
-        });
-    });
+//     // Handle group updates
+//     socket.on('group-update', (data) => {
+//         const { groupId, updateType, payload } = data;
+//         io.to(`group-${groupId}`).emit('group-updated', {
+//             groupId,
+//             updateType,
+//             payload
+//         });
+//     });
 
-    // Handle disconnection
-    socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.user?.id);
-    });
-});
+//     // Handle disconnection
+//     socket.on('disconnect', () => {
+//         console.log('Client disconnected:', socket.user?.id);
+//     });
+// });
 
 // Routes
 app.use('/api/v1/auth', authRoutes);

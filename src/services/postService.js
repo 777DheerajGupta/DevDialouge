@@ -113,6 +113,7 @@ export const getPostComments = async (postId) => {
 export const createPostComment = async (postId, commentData) => {
   try {
     const response = await apiConnector('POST', `/comments/post/${postId}`, commentData);
+    console.log('comments post response ka data' , response.data)
     return response.data;
   } catch (error) {
     if (error.response?.status === 401) {

@@ -14,6 +14,7 @@ import {
 
 // Add a Comment component with edit and delete functionality
 const Comment = ({ comment, onDelete, onUpdate }) => {
+  //  console.log('Comments is' , comment)
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.content);
   const [loading, setLoading] = useState(false);
@@ -304,8 +305,18 @@ const PostDetail = () => {
     try {
       setCommentLoading(true);
       const newComment = await createPostComment(id, { content });
-      setComments(prevComments => [...prevComments, newComment]);
-      toast.success('Comment posted successfully');
+      console.log( 'newComment' , newComment.success)
+      
+      // Ensure newComment contains author and createdAt fields
+      if (newComment.success) {
+        setComments(prevComments => [...prevComments, newComment.data]);
+        toast.success('Comment posted successfully');
+      } else {
+        throw new Error('Comment data is incomplete');
+      }
+      
+      // Optionally, you can reset the comment input here if needed
+      // setComment(''); // Uncomment if you want to clear the input after submission
     } catch (error) {
       console.error('Error posting comment:', error);
       toast.error(error.message || 'Failed to post comment');

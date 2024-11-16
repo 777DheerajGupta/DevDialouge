@@ -197,11 +197,13 @@ const QuestionDetail = () => {
 
     try {
       const response = await submitSolution(questionIdentifier, { content: newSolution });
-      if (response.success && response.data) {
-        setQuestion(prev => ({
-          ...prev,
-          solutions: [...(prev.solutions || []), response.data]
-        }));
+      console.log('solution response is ', response)
+      if (response.success) {
+        setSolutions(prevSolutions => [...prevSolutions, response.data]);
+        // setQuestion(prev => ({
+        //   ...prev,
+        //   solutions: [...(prev.solutions || []), response.data]
+        // }));
         setNewSolution('');
         toast.success('Solution submitted successfully!');
       }

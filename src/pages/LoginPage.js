@@ -21,6 +21,7 @@ const LoginPage = () => {
       //console.log('Attempting login with:', { email });
       
       const response = await apiConnector('POST', '/auth/login', { email, password });
+      console.log('Login response:', response);
 
 
 

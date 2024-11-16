@@ -2,8 +2,7 @@ const Comment = require('../models/Comment');
 const Post = require('../models/Post');
 const Question = require('../models/Question');
 
-// Create a new comment on a post or question
-// Create a new comment on a post or question
+
 const createComment = async (req, res) => {
     try {
         const { content } = req.body;
@@ -27,6 +26,8 @@ const createComment = async (req, res) => {
                 post: postId,
                 author: req.user.id,
             };
+
+            
         } else if (questionId) {
             item = await Question.findById(questionId);
             if (!item) {
@@ -39,11 +40,15 @@ const createComment = async (req, res) => {
                 author: req.user.id,
             };
         }
-
+        
         // Create the comment with the appropriate data
         const comment = await Comment.create(commentData);
 
-        res.status(201).json({ success: true, data: comment });
+        const populatedComment = await Comment.findById(comment._id)
+        .populate("author", "name email")
+        .exec();
+
+        res.status(201).json({ success: true, data: populatedComment });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
