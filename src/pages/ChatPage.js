@@ -20,7 +20,6 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [connected, setConnected] = useState(false);
   const socketRef = useRef();
   const currentUser = useSelector(state => state.auth.user);
   const messagesEndRef = useRef(null);
@@ -35,7 +34,6 @@ const ChatPage = () => {
     const fetchUsers = async () => {
       try {
         const response = await apiConnector('GET', '/users/all');
-        // console.log('users response', response.data.data);
         const filteredUsers = response.data.data.filter(
           user => user._id !== currentUser.id
         );
@@ -55,7 +53,6 @@ const ChatPage = () => {
     const fetchRecentGroups = async () => {
       try {
         const response = await apiConnector('GET', '/groups/all');
-        console.log(" groups response", response.data.data);
         setRecentGroups(response.data.data);
       } catch (error) {
         console.error('Error fetching recent groups:', error);
@@ -69,10 +66,8 @@ const ChatPage = () => {
 
   useEffect(() => {
     if (!selectedUser) return;
-    // console.log('selected user' , selectedUser)
 
-    // Log the socket URL for debugging
-    const socketUrl = `${process.env.REACT_APP_BASE_URL}/chat`;
+    const socketUrl = "http://localhost:5000/chat"; 
     console.log("Socket URL:", socketUrl);
 
     // Initialize socket connection to the /chat namespace
@@ -84,30 +79,30 @@ const ChatPage = () => {
         }
     });
 
-    socketRef.current.on('connection', () => {
-        console.log("Socket connected:", socketRef.current.id); // Log socket ID
+    socketRef.current.on('connect', () => {
+        console.log("Socket connected:", socketRef.current.id);
+        // Register the user with their ID
+        socketRef.current.emit('register-user', currentUser.id);
+        
+        // Join private room
+        socketRef.current.emit('join-chat', {
+            userId: currentUser.id,
+            recipientId: selectedUser._id
+        });
     });
 
     socketRef.current.on('connect_error', (err) => {
         console.error("Socket connection error:", err); // Log connection error
     });
 
-    // Join private room
-    socketRef.current.emit('join-chat', {
-        userId: currentUser._id,
-        recipientId: selectedUser._id
+    socketRef.current.on('disconnect', () => {
+        console.log("Socket disconnected");
     });
-
-    // Listen for incoming messages
+    
+    // Listen for incoming private messages
     socketRef.current.on('private-message', (message) => {
-        // Ensure the incoming message includes the sender's name
-        const messageWithSender = {
-            ...message,
-            sender: message.senderName || currentUser.name, // Fallback to currentUser.name if not available
-            status: 'received',
-        };
-
-        setMessages(prevMessages => [...prevMessages, messageWithSender]);
+        console.log('Private message received:', message);
+        setMessages(prevMessages => [...prevMessages, message]);
         scrollToBottom(); // Scroll to the bottom when a new message is received
     });
 
@@ -119,6 +114,7 @@ const ChatPage = () => {
                 const formattedMessages = response.data.data.messages.map(msg => ({
                     ...msg,
                     status: msg.sender === currentUser.id ? 'sent' : 'received',
+                    isOwnMessage: msg.sender === currentUser.id,
                 }));
                 setMessages(formattedMessages);
                 scrollToBottom();
@@ -136,7 +132,7 @@ const ChatPage = () => {
             socketRef.current.disconnect();
         }
     };
-  }, [selectedUser, currentUser.id]);
+}, [selectedUser, currentUser.id]);
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
@@ -181,25 +177,9 @@ const ChatPage = () => {
     }
   };
 
-
-
   // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Mark messages as read
-  const markMessagesAsRead = async (senderId) => {
-    try {
-      await apiConnector('PUT', `/chat/read/${senderId}`);
-      setMessages(prevMessages => 
-        prevMessages.map(msg => 
-          msg.sender === senderId ? { ...msg, read: true } : msg
-        )
-      );
-    } catch (error) {
-      console.error('Error marking messages as read:', error);
-    }
   };
 
   return (
@@ -231,12 +211,8 @@ const ChatPage = () => {
                             Groups
                         </button>
                     </div>
-                    
-                  
                 </div>
             </div>
-
-            
 
             {/* Tabs */}
             <div className="flex bg-white flex-none">
@@ -256,9 +232,7 @@ const ChatPage = () => {
                             ? 'text-[#00a884] border-b-2 border-[#00a884]'
                             : 'text-[#54656f]'
                     }`}
-                    onClick={() => {
-                      setActiveTab('groups');
-                    }}
+                    onClick={() => setActiveTab('groups')}
                 >
                     Group Chats
                 </button>
@@ -340,7 +314,7 @@ const ChatPage = () => {
                                 <ChatMessage
                                     key={index}
                                     message={msg}
-                                    isOwnMessage={msg.sender === currentUser.id}
+                                    isOwnMessage={msg.sender.id === currentUser.id}
                                 />
                             ))}
                             <div ref={messagesEndRef} />

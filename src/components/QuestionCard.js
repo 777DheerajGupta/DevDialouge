@@ -43,7 +43,7 @@ const QuestionCard = ({ question }) => {
       
       {/* Author and Date */}
       <div className="text-sm text-gray-500 mb-2">
-        Asked by <span className="font-medium text-gray-700">{asker.name}</span> on {new Date(createdAt).toLocaleDateString()}
+        Asked by <span className="font-medium text-gray-700">{asker}</span> on {new Date(createdAt).toLocaleDateString()}
       </div>
 
       {/* Tags */}

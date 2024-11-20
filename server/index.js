@@ -2,7 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const http = require('http');
+const {createServer} = require('node:http');
 const socketIO = require('socket.io');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
@@ -11,8 +11,9 @@ const initializeGroupSocket = require('./config/groupSocket');
 const {cloudinaryConnect} = require('./config/cloudinary');
 const path = require('path');
 const fileUpload = require('express-fileupload');
+const {Server} = require('socket.io')   
 
-// Load environment variables
+
 
 cloudinaryConnect();
 
@@ -37,7 +38,7 @@ const trendingRoutes = require('./routes/trendingRoutes');
 
 // Create Express App
 const app = express();
-const server = http.createServer(app);
+const server = createServer(app);
 
  app.use(express.json());
 
@@ -46,7 +47,7 @@ const server = http.createServer(app);
 
 // Configure CORS for Express
 app.use(cors({
-    origin: 'https://dev-dialouge-frontend.vercel.app',
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -67,7 +68,7 @@ const io = socketIO(server, {
 });
 
 const chatIO = initializeChatSocket(io);
-// console.log('chat io', chatIO)
+ console.log('chat io', chatIO)
 const groupIO = initializeGroupSocket(io);
 
 // Make both socket instances available in routes
@@ -109,48 +110,6 @@ app.use((req, res, next) => {
   });
   
 
-// Body parser middleware with error handling
-// app.use(express.json({
-//     verify: (req, res, buf, encoding) => {
-//         try {
-//             JSON.parse(buf);
-//         } catch (e) {
-//             res.status(400).json({
-//                 success: false,
-//                 message: 'Invalid JSON payload'
-//             });
-//             throw new Error('Invalid JSON');
-//         }
-//     }
-// }));
-
-// Custom error handling middleware
-// app.use((err, req, res, next) => {
-//     console.error("Error details:", err);
-    
-//     // Handle JSON parsing errors
-//     if (err instanceof SyntaxError && err.type === 'entity.parse.failed') {
-//         return res.status(400).json({
-//             success: false,
-//             message: 'Invalid request body - Please send valid JSON'
-//         });
-//     }
-
-//     // Handle validation errors
-//     if (err.name === 'ValidationError') {
-//         return res.status(400).json({
-//             success: false,
-//             message: err.message,
-//             errors: Object.values(err.errors).map(e => e.message)
-//         });
-//     }
-
-//     // Handle other errors
-//     res.status(500).json({ 
-//         success: false,
-//         message: err.message || 'Something went wrong!' 
-//     });
-// });
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URL, {
@@ -254,6 +213,10 @@ app.use('/api/v1/tags', tagRoutes);
 app.use('/api/v1/ratings', ratingRoutes);
 app.use('/api/v1/gemini', geminiRoutes);
 app.use('/api/v1/trending', trendingRoutes);
+
+app.get('/', (req, res) => {
+  res.send('Welcome to DevDialouge Backend');
+});
 
 // Server Listening
 const PORT = process.env.PORT || 10000;
