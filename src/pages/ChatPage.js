@@ -67,8 +67,8 @@ const ChatPage = () => {
   useEffect(() => {
     if (!selectedUser) return;
 
-    // const socketUrl = "https://devdialouge-back.onrender.com/chat"; 
-    const socketUrl = "http://localhost:5000/chat"; 
+    const socketUrl = "https://devdialouge-back.onrender.com/chat"; 
+    // const socketUrl = "http://localhost:5000/chat"; 
     console.log("Socket URL:", socketUrl);
 
     // Initialize socket connection to the /chat namespace
