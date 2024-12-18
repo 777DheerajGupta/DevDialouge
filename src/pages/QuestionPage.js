@@ -19,8 +19,12 @@ const QuestionPage = () => {
         const response = await apiConnector('GET', '/questions/');
         console.log(' get question API Response:', response.data.data);
         
+<<<<<<< HEAD
         // const questionsData = Array.isArray(response.data.success) ? response.data : response.data.data;
         // console.log('questiondata' , questionsData)
+=======
+        // const questionsData = Array.isArray(response.data) ? response.data : response.data.data;
+>>>>>>> c23688e4a3ad2d0296451da5fa377b341be981f0
         setQuestions(response.data.data || []);
       } catch (error) {
         console.error('Error fetching questions:', error);
