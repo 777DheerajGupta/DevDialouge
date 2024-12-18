@@ -14,15 +14,24 @@ const ProfilePage = () => {
     confirmPassword: '',
   });
   const [profileImage, setProfileImage] = useState({
-    preview: null,
-    file: null
+    preview: user.profilePicture || '', // URL from database
+    file: null,
   });
+
+  useEffect(() => {
+    if (user.profilePicture) {
+      setProfileImage((prev) => ({
+        ...prev,
+        preview: user.profilePicture,
+      }));
+    }
+  }, [user.profilePicture]);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       const userId = localStorage.getItem('userId');
-      console.log('userId', userId);
+      // console.log('userId', userId);
 
 
       try {
@@ -65,12 +74,14 @@ const ProfilePage = () => {
         return;
       }
 
+      // Set a preview for the uploaded image
       setProfileImage({
         preview: URL.createObjectURL(file),
-        file: file
+        file: file,
       });
     }
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

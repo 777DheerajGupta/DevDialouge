@@ -8,7 +8,7 @@ const QuestionCard = ({ question }) => {
 
   const { _id, title, asker, content, tags, createdAt } = question;
 
-  console.log('question card ka question' , question)
+  console.log('question card ka data' , question)
 
   // Function to extract image URLs from content
   const extractImageUrl = (content) => {
@@ -43,7 +43,7 @@ const QuestionCard = ({ question }) => {
       
       {/* Author and Date */}
       <div className="text-sm text-gray-500 mb-2">
-        Asked by <span className="font-medium text-gray-700">{asker}</span> on {new Date(createdAt).toLocaleDateString()}
+        Asked by <span className="font-medium text-gray-700">{asker.name}</span> on {new Date(createdAt).toLocaleDateString()}
       </div>
 
       {/* Tags */}

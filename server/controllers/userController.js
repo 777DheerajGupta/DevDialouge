@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const mongoose = require('mongoose')
 const Post = require('../models/Post');
+const cloudinary = require('cloudinary').v2;
 
 // Get user profile
 const getUserProfile = async (req, res) => {
@@ -86,8 +87,22 @@ const updateUserProfile = async (req, res) => {
         const updatedData = {};
         if (name) updatedData.name = name;
         if (email) updatedData.email = email;
-        // if (password) updatedData.password = password; // Make sure to hash this password in the model or middleware
 
+        // Check if a new profile picture is uploaded
+        if (req.files && req.files.profileImage) {
+            const profileImage = req.files.profileImage;
+
+            // Upload the image to Cloudinary
+            const result = await cloudinary.uploader.upload(profileImage.tempFilePath, {
+                folder: 'Dheeraj Ka File', // Specify the folder in Cloudinary
+            });
+
+            console.log('Uploaded Image:', result);
+
+            updatedData.profilePicture = result.secure_url; // Save the URL to the user model
+        }
+
+        // Update user data in the database
         const user = await User.findByIdAndUpdate(req.user.id, updatedData, { new: true, runValidators: true }).select('-password');
 
         if (!user) {
@@ -96,9 +111,11 @@ const updateUserProfile = async (req, res) => {
 
         res.status(200).json({ success: true, data: user });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update profile' });
     }
 };
+
 
 // Delete user profile
 const deleteUserProfile = async (req, res) => {

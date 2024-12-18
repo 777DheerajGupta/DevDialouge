@@ -1,17 +1,24 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-function ActivityFeed({ posts = [], questions = [] }) {
+function ActivityFeed({ posts,  questions  }) {
+
+  // console.log('posts' , posts)  
+  // console.log('questions' , questions)
   // Ensure posts and questions are arrays
   const postsArray = Array.isArray(posts) ? posts : [];
   const questionsArray = Array.isArray(questions) ? questions : [];
+
+  // console.log('post Array' , postsArray)
+  // console.log('question Array' , questionsArray)
 
   // Combine and sort posts and questions by date
   const activities = [
     ...postsArray.map(post => ({
       ...post,
       type: 'post',
-      uniqueId: `post-${post._id}`
+      uniqueId: `post-${post._id}`,
+      asker:post?.author
     })),
     ...questionsArray.map(question => ({
       ...question,
@@ -19,6 +26,7 @@ function ActivityFeed({ posts = [], questions = [] }) {
       uniqueId: `question-${question._id}`
     }))
   ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  console.log('activities' , activities)
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -52,7 +60,7 @@ function ActivityFeed({ posts = [], questions = [] }) {
                 <div>
                   <p className="text-gray-800">
                     <span className="font-semibold">
-                      {activity.user?.name || 'Unknown User'}
+                      {activity.asker?.name || 'Unknown User'}
                     </span>
                     {activity.type === 'post' ? (
                       <Link 
@@ -99,13 +107,13 @@ function ActivityFeed({ posts = [], questions = [] }) {
             <p className="text-gray-500">No recent activity</p>
             <div className="mt-4 space-x-4">
               <Link
-                to="/posts/create"
+                to="/create-post"
                 className="text-blue-500 hover:text-blue-600"
               >
                 Create a Post
               </Link>
               <Link
-                to="/questions/ask"
+                to="/ask-question"
                 className="text-blue-500 hover:text-blue-600"
               >
                 Ask a Question

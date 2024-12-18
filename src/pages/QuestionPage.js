@@ -17,10 +17,11 @@ const QuestionPage = () => {
     const fetchQuestions = async () => {
       try {
         const response = await apiConnector('GET', '/questions/');
-        // console.log('API Response:', response);
+        console.log(' get question API Response:', response.data.data);
         
-        const questionsData = Array.isArray(response.data) ? response.data : response.data.data;
-        setQuestions(questionsData || []);
+        // const questionsData = Array.isArray(response.data.success) ? response.data : response.data.data;
+        // console.log('questiondata' , questionsData)
+        setQuestions(response.data.data || []);
       } catch (error) {
         console.error('Error fetching questions:', error);
         toast.error('Failed to fetch questions!');
