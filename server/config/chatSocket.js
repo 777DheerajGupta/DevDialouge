@@ -2,11 +2,9 @@ const jwt = require('jsonwebtoken');
 
 const initializeChatSocket = (io) => {
     // Chat namespace
-<<<<<<< HEAD
-    const chatIO = io.of('/chat');
-=======
+
  const chatIO = io.of('/chat');
->>>>>>> c23688e4a3ad2d0296451da5fa377b341be981f0
+
 
     // Mapping of user IDs to socket IDs
     const userSocketMap = {}; // Example mapping
