@@ -8,7 +8,7 @@ const AuthLayout = () => {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <Link to="/" className="text-xl font-bold text-gray-800">
-            Your App Name
+            DevDialouge
           </Link>
         </div>
       </header>
