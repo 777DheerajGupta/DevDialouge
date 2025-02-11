@@ -47,7 +47,7 @@ const server = createServer(app);
 
 // Configure CORS for Express
 app.use(cors({
-    origin: "https://dev-dialouge-frontend.vercel.app/",
+    origin: "https://dev-dialouge-frontend.vercel.app",
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -61,7 +61,7 @@ app.use(fileUpload({
 // Configure Socket.IO with CORS and authentication
 const io = socketIO(server, {
     cors: {
-        origin: "https://dev-dialouge-frontend.vercel.app/" ,
+        origin: "https://dev-dialouge-frontend.vercel.app" ,
         methods: ["GET", "POST"],
         credentials: true
     }
