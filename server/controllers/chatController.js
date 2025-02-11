@@ -58,7 +58,7 @@ const sendGroupMessage = async (req, res) => {
         await chat.save();
         // Emit the message to all members of the group using Socket.io
         const io = getIo()
-        io.to(groupId).emit('groupMessage', chat);
+        io.to(groupId).emit('group-message', chat);
 
         res.status(200).json({ success: true, data: chat });
     } catch (error) {

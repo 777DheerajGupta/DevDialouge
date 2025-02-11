@@ -33,7 +33,7 @@ export const fetchGroupChatHistory = async (groupId) => {
 // Send Message in Group Chat
 export const sendGroupMessage = async (groupId, messageData) => {
   try {
-    const response = await apiConnector('POST', `/chat/group/${groupId}/send`, messageData);
+    const response = await apiConnector('POST', `/chat/group/${groupId}/messages`, messageData);
     return response.data; // Returns details of the sent group message
   } catch (error) {
     throw error; // Handle error accordingly

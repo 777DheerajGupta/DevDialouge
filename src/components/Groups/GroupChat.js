@@ -5,6 +5,7 @@ import { apiConnector } from '../../api/apiConnector';
 import { socketService } from '../../services/socketService';
 import { toast } from 'react-hot-toast';
 import GroupSettings from './GroupSettings';
+import  io  from 'socket.io-client';
 
 const GroupChat = () => {
     const { groupId } = useParams();
@@ -20,6 +21,7 @@ const GroupChat = () => {
     const messagesContainerRef = useRef(null);
     const messagesEndRef = useRef(null);
     const settingsMenuRef = useRef(null);
+    const socketRef = useRef();
 
     // Auto scroll to bottom when new messages arrive
     const scrollToBottom = () => {
@@ -45,11 +47,14 @@ const GroupChat = () => {
                 }
 
                 const groupData = response.data.data;
+                // console.log('group ka data', groupData.messages);
+                // console.log('user' , user);
                 
                 // Check if user is a member or admin
                 const isMember = groupData.members.some(
                     member => member.user._id === user.id
                 );
+                // console.log('member' , isMember);
                 const isAdmin = groupData.admin.some(
                     admin => admin._id === user.id
                 );
@@ -59,6 +64,7 @@ const GroupChat = () => {
                 }
 
                 setGroup(groupData);
+                // console.log('groupdata messages', groupData);
                 setMessages(groupData.messages || []);
 
             } catch (error) {
@@ -81,51 +87,137 @@ const GroupChat = () => {
     }, [groupId, user?.id, navigate]);
 
     // Socket connection for real-time updates
-    useEffect(() => {
-        if (!group || !user?.id) return;
 
-        try {
-            socketService.connectGroup();
-            socketService.joinGroups([groupId]);
 
-            socketService.onNewGroupMessage(({ message }) => {
-                if (message) {
-                    setMessages(prev => [...prev, message]);
-                    scrollToBottom();
-                }
-            });
+// Replace socket connection useEffect
+useEffect(() => {
+    if (!group || !user?.id) return;
 
-            socketService.onGroupUpdated(({ updateType, payload }) => {
-                if (updateType === 'MEMBER_ADDED' || updateType === 'MEMBER_REMOVED') {
-                    setGroup(prevGroup => ({
-                        ...prevGroup,
-                        members: payload.members
-                    }));
-                }
-            });
-
-        } catch (error) {
-            console.error('Socket connection error:', error);
-            toast.error('Failed to connect to chat service');
+    const socketUrl = "http://localhost:5000/groups";
+    
+    socketRef.current = io(socketUrl, {
+        withCredentials: true,
+        transports: ['websocket', 'polling'],
+        auth: {
+            token: localStorage.getItem('token')
         }
+    });
 
-        return () => {
-            socketService.removeAllListeners();
+    socketRef.current.on('connect', () => {
+        console.log("Socket connected:", socketRef.current.id);
+        
+        // Join group room
+        socketRef.current.emit('join-group', {
+            userId: user.id,
+           groupId: `group-${groupId}`
+        });
+    });
+
+    socketRef.current.on('new-group-message', (data) => {
+        console.log('Received message:', data);
+        // Add message to state with proper structure
+        const newMessage = {
+            _id: data.message._id,
+            content: data.message.content,
+            sender: {
+                _id: data.message.sender._id,
+                name: data.message.sender.name,
+                profilePicture: data.message.sender.profilePicture
+            },
+            createdAt: data.message.createdAt
         };
-    }, [group, user?.id, groupId]);
+        
+        setMessages(prev => [...prev, newMessage]);
+        scrollToBottom();
+    });
+
+    socketRef.current.on('connect_error', (err) => {
+        console.error("Socket connection error:", err);
+    });
+
+    return () => {
+        if (socketRef.current) {
+            socketRef.current.emit('leave-group', {
+                userId: user.id,
+                groupId: groupId
+            });
+            socketRef.current.disconnect();
+        }
+    };
+}, [group, user?.id, groupId]);
+    // useEffect(() => {
+    //     if (!group || !user?.id) return;
+
+    //     try {
+    //         socketService.connectGroup();
+    //         socketService.joinGroups([groupId]);
+
+    //         socketService.onNewGroupMessage(({ message }) => {
+    //             if (message) {
+    //                 setMessages(prev => [...prev, message]);
+    //                 scrollToBottom();
+    //             }
+    //         });
+
+    //         socketService.onGroupUpdated(({ updateType, payload }) => {
+    //             if (updateType === 'MEMBER_ADDED' || updateType === 'MEMBER_REMOVED') {
+    //                 setGroup(prevGroup => ({
+    //                     ...prevGroup,
+    //                     members: payload.members
+    //                 }));
+    //             }
+    //         });
+
+    //     } catch (error) {
+    //         console.error('Socket connection error:', error);
+    //         toast.error('Failed to connect to chat service');
+    //     }
+
+    //     return () => {
+    //         socketService.removeAllListeners();
+    //     };
+    // }, [group, user?.id, groupId]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
-
+    
         try {
             const response = await apiConnector('POST', `/groups/${groupId}/messages`, {
                 content: newMessage
             });
-
+    
             if (response?.data?.success) {
+
+              
+                // Create message object matching server format
+                const newMessageObj = {
+                    _id: response.data.data._id,
+                    content: newMessage,
+                    sender: {
+                        _id: user.id,
+                        name: user.name,
+                        profilePicture: user.profilePicture
+                    },
+                    createdAt: new Date().toISOString()
+                };
+    
+                // Update local state immediately
+                // setMessages(prev => [...prev, newMessageObj]);
+                
+                // Emit to socket
+                socketRef.current.emit('group-message', {
+                    groupId,
+                    content: newMessage,
+                    sender: {
+                        _id: user.id,
+                        name: user.name,
+                        profilePicture: user.profilePicture
+                    },
+                    createdAt: new Date().toISOString()
+                });
+    
                 setNewMessage('');
-                socketService.sendGroupMessage(groupId, response.data.data);
                 scrollToBottom();
             }
         } catch (error) {
@@ -133,6 +225,7 @@ const GroupChat = () => {
             toast.error('Failed to send message');
         }
     };
+    
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -269,23 +362,20 @@ const GroupChat = () => {
                         </div>
                     ) : (
                         messages.map((message, index) => {
-                            const isOwnMessage = message.sender._id === user?.id;
-                            const showAvatar = !isOwnMessage && 
-                                (!messages[index - 1] || messages[index - 1].sender._id !== message.sender._id);
-                            
+                            const isOwnMessage = message.sender?.id === user?.id;
                             return (
                                 <div
-                                    key={message._id}
+                                    key={message._id || index}
                                     className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} animate-fade-in`}
                                 >
                                     <div className={`flex items-end gap-1 max-w-[65%] ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
-                                        {showAvatar && !isOwnMessage && (
+                                        {/* {!isOwnMessage && (
                                             <img
-                                                src={message.sender.profilePicture || '/default-avatar.png'}
-                                                alt={message.sender.name}
+                                                src={message.sender?.profilePicture || '/default-avatar.png'}
+                                                alt={message.sender?.name}
                                                 className="w-8 h-8 rounded-full mb-1"
                                             />
-                                        )}
+                                        )} */}
                                         <div
                                             className={`rounded-lg p-2 shadow-sm relative ${
                                                 isOwnMessage 
@@ -293,18 +383,23 @@ const GroupChat = () => {
                                                     : 'bg-white text-[#111b21]'
                                             }`}
                                         >
-                                            {!isOwnMessage && showAvatar && (
+                                            {!isOwnMessage && (
                                                 <p className="text-xs font-medium text-[#1fa855] mb-1">
-                                                    {message.sender.name}
+                                                    {message.sender?.name}
                                                 </p>
                                             )}
                                             <p className="text-sm break-words">{message.content}</p>
                                             <div className="flex items-center justify-end gap-1 mt-1">
                                                 <span className="text-[10px] text-[#667781]">
-                                                    {new Date(message.createdAt).toLocaleTimeString([], {
-                                                        hour: '2-digit',
-                                                        minute: '2-digit'
-                                                    })}
+                                                {message.createdAt ? 
+                                               new Date(message.createdAt).toLocaleTimeString([], {
+                                                hour: '2-digit',
+                                                      minute: '2-digit',
+                                                     hour12: true
+                                                 }) 
+                                                 : 'Invalid date'
+                                             }
+                                                
                                                 </span>
                                                 {isOwnMessage && (
                                                     <i className="fas fa-check-double text-[10px] text-[#53bdeb]"></i>

@@ -22,25 +22,33 @@ const initializeGroupSocket = (io) => {
         console.log('User connected to groups:', socket.user.id);
 
         // Join group rooms
-        socket.on('join-groups', (groups) => {
-            groups.forEach(groupId => {
-                socket.join(`group-${groupId}`);
-                console.log(`User joined group: ${groupId}`);
-            });
+        socket.on('join-group', (data) => {
+            const { groupId } = data;
+            socket.join(groupId);
+            console.log(`User ${socket.user.id} joined group: ${groupId}`);
         });
+    
 
         // Handle group messages
         socket.on('group-message', (data) => {
-            const { groupId, message } = data;
-            groupIO.to(`group-${groupId}`).emit('new-group-message', {
+            // console.log('object', data.sender.name);
+            const { groupId, content ,sender} = data;
+            // console.log('Group message received:', data);
+            const roomId = `group-${groupId}`;
+
+            // console.log(`Broadcasting to room: ${roomId}`);
+            
+            // Broadcast to room
+            groupIO.to(roomId).emit('new-group-message', {
                 groupId,
                 message: {
-                    ...message,
+                    content,
                     sender: {
-                        _id: socket.user.id,
-                        name: socket.user.name,
+                        _id: sender._id,
+                        name: sender.name,
                         profilePicture: socket.user.profilePicture
-                    }
+                    },
+                    createdAt: new Date().toISOString()
                 }
             });
         });

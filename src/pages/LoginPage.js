@@ -18,7 +18,7 @@ const LoginPage = () => {
     try {
       dispatch(setLoading(true));
       
-      //console.log('Attempting login with:', { email });
+      // console.log('Attempting login with:', { email });
       
       const response = await apiConnector('POST', '/auth/login', { email, password });
       console.log('Login response:', response);

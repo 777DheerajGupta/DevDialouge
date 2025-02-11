@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_BASE_URL || 'https://devdialouge-back.onrender.com/api/v1';
+// const BASE_URL = process.env.REACT_APP_BASE_URL || 'https://localhost:5000/api/v1';
+const BASE_URL = 'https://devdialouge-back.onrender.com/api/v1';
 
 export const apiConnector = async (method, endpoint, data = null, isFormData = false) => {
   try {

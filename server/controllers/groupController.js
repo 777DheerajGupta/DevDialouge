@@ -54,8 +54,15 @@ const getGroup = async (req, res) => {
         const { groupId } = req.params;
 
         const group = await Group.findById(groupId)
-            .populate('admin', 'name profilePicture')
-            .populate('members.user', 'name profilePicture');
+            .populate('admin')
+            .populate({
+                path: 'members.user',
+                select: '_id name profilePicture'
+            })
+            .populate({
+                path: 'messages.sender',
+                select: '_id name profilePicture'
+            });
 
         if (!group) {
             return res.status(404).json({
@@ -63,6 +70,7 @@ const getGroup = async (req, res) => {
                 message: 'Group not found'
             });
         }
+
         const formattedGroup = {
             _id: group._id,
             name: group.name,
@@ -75,31 +83,34 @@ const getGroup = async (req, res) => {
             members: group.members.map(member => ({
                 role: member.role,
                 _id: member._id,
-                user: member.user ? {
+                user: {
                     _id: member.user._id,
                     name: member.user.name,
                     profilePicture: member.user.profilePicture
-                } : null,
+                },
                 joinedAt: member.joinedAt
             })),
-            image: group.image,
-            isActive: group.isActive,
-            messages: group.messages,
-            lastActivity: group.lastActivity,
-            createdAt: group.createdAt,
-            updatedAt: group.updatedAt
+            messages: group.messages.map(message => ({
+                _id: message._id,
+                content: message.content,
+                sender: {
+                    _id: message.sender._id,
+                    name: message.sender.name,
+                    profilePicture: message.sender.profilePicture
+                },
+                createdAt: message.createdAt
+            }))
         };
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             data: formattedGroup
         });
-
     } catch (error) {
-        console.error('Error fetching group:', error);
-        res.status(500).json({
+        console.error('Error in getGroup:', error);
+        return res.status(500).json({
             success: false,
-            message: error.message
+            message: 'Internal server error'
         });
     }
 };

@@ -10,7 +10,7 @@ class SocketService {
         if (this.chatSocket) return;
 
         // const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000/api/v1';
-        const BASE_URL =  'http://localhost:5000';
+        const BASE_URL =  'https://devdialouge-back.onrender.com';
         const token = localStorage.getItem('token');
         
         try {
@@ -41,13 +41,14 @@ class SocketService {
     }
 
     connectGroup() {
-        if (this.groupSocket) return;
+        // if (this.groupSocket) return;
 
-        const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000/api/v1';
+        // const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000/api/v1';
+        const BASE_URL =  'https://devdialouge-back.onrender.com';
         const token = localStorage.getItem('token');
         
         try {
-            this.groupSocket = io(BASE_URL, {
+            this.groupSocket = io(`${BASE_URL}/groups`, {
                 auth: { token },
                 withCredentials: true,
                 transports: ['websocket', 'polling'],
