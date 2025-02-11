@@ -93,7 +93,7 @@ const GroupChat = () => {
 useEffect(() => {
     if (!group || !user?.id) return;
 
-    const socketUrl = "http://localhost:5000/groups";
+    const socketUrl = "https://devdialouge-back.onrender.com/groups";
     
     socketRef.current = io(socketUrl, {
         withCredentials: true,
