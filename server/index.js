@@ -54,9 +54,10 @@ const server = createServer(app);
 // })); 
 
 app.use(cors({
-    origin: "https://dev-dialouge-frontend.vercel.app",
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    credentials: true
+  origin: "https://dev-dialouge-frontend.vercel.app",
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 
